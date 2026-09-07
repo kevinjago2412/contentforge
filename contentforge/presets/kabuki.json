@@ -1,0 +1,35 @@
+{
+  "name": "kabuki",
+  "description": "Preset riset & render klip gaming MLBB (khususnya Goldlane/Marksman) dari livestream panjang. Fokus ke konten guide/niche/edukatif dengan vertical gaming layout.",
+  "source_type": "long_gaming_livestream",
+  "llm": {
+    "model": "kimi-k2.7-code",
+    "max_tokens": 2500
+  },
+  "analysis": {
+    "language": "id",
+    "chunk_duration": 600,
+    "overlap": 120,
+    "focus": "guide_and_niche",
+    "categories": [
+      "laning_phase",
+      "macro",
+      "mindset_comeback",
+      "tips",
+      "clutch",
+      "hero_mechanic",
+      "item_build"
+    ],
+    "score_range": "0-100",
+    "output_file": "guide_niche_clips.json"
+  },
+  "render": {
+    "layout": "gaming",
+    "gameplay_focus": 0.5,
+    "subtitle_margin_v": 300,
+    "with_subtitles": true,
+    "clips_dir": "/sdcard/Movies/ContentForge",
+    "top_n_render": 5
+  },
+  "caption_style": "indonesian_casual_with_mlbb_goldlane_hashtags"
+}

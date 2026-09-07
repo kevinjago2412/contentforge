@@ -1,0 +1,15 @@
+[1/5] Downloading subtitles for: https://www.youtube.com/live/qmtIQdG2JD0
+[download]    1.00KiB at  378.72KiB/s (00:00:00)[download]    3.00KiB at  389.47KiB/s (00:00:00)[download]    7.00KiB at  532.82KiB/s (00:00:00)[download]   15.00KiB at  821.26KiB/s (00:00:00)[download]   31.00KiB at  909.48KiB/s (00:00:00)[download]   63.00KiB at    1.35MiB/s (00:00:00)[download]  127.00KiB at    1.90MiB/s (00:00:00)[download]  255.00KiB at    2.81MiB/s (00:00:00)[download]  511.00KiB at    3.50MiB/s (00:00:00)[download] 1023.00KiB at    4.35MiB/s (00:00:00)[download]    1.61MiB at    5.16MiB/s (00:00:00)[download] 100% of    1.61MiB in 00:00:00 at 2.34MiB/s                                                            Subtitle saved: /tmp/contentforge_d896occu/qmtIQdG2JD0.id.vtt
+      Title: LETSGO VIP MAIN GOLDLANE - MLBB
+[2/5] Parsing VTT...
+      Found 9748 cues
+[3/5] Chunking transcript...
+      Created 41 chunks
+[4/5] Querying LLM for candidates...
+      Chunk 0: 0 candidates
+      Chunk 1: 0 candidates
+      Chunk 2: 3 candidates
+      Chunk 3: error (Unterminated string starting at: line 1 column 282 (char 281))
+      Chunk 4: 0 candidates
+      Chunk 5: 0 candidates
+      Chunk 6: 3 candidates

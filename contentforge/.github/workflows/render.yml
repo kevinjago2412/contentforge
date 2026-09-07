@@ -1,0 +1,121 @@
+name: Render Clips
+
+on:
+  # Trigger manual dari web GitHub (bisa dari browser hape)
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "YouTube URL (video/live/VOD)"
+        required: true
+      layout:
+        description: "Layout: default (podcast) atau gaming (facecam+gameplay)"
+        required: false
+        default: "gaming"
+      top_n:
+        description: "Jumlah clip top-N"
+        required: false
+        default: "5"
+      subtitles:
+        description: "Bakar subtitle (true/false)"
+        required: false
+        default: "true"
+      lang:
+        description: "Bahasa subtitle (id/en)"
+        required: false
+        default: "id"
+      chunk_duration:
+        description: "Durasi chunk (detik) — 600 untuk livestream panjang"
+        required: false
+        default: "600"
+      overlap:
+        description: "Overlap antar chunk (detik)"
+        required: false
+        default: "120"
+      gameplay_focus:
+        description: "Fokus horizontal crop gameplay (0=left, 1=right)"
+        required: false
+        default: "0.5"
+      subtitle_margin:
+        description: "Margin bawah subtitle (px) — 300 untuk gaming"
+        required: false
+        default: "300"
+
+  # Trigger via curl/HTTP dari hape (butuh PAT dengan scope repo)
+  repository_dispatch:
+    types: [render-clips]
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Write .env from secrets
+        run: |
+          printf 'OPENAI_API_KEY=%s\nOPENAI_BASE_URL=%s\nMODEL=%s\n' \
+            "${{ secrets.OPENAI_API_KEY }}" \
+            "${{ secrets.OPENAI_BASE_URL }}" \
+            "${{ secrets.MODEL }}" > .env
+
+      - name: Resolve inputs
+        id: args
+        run: |
+          # workflow_dispatch: pakai inputs; repository_dispatch: pakai client_payload
+          URL="${{ github.event.inputs.url || github.event.client_payload.url }}"
+          LAYOUT="${{ github.event.inputs.layout || github.event.client_payload.layout || 'gaming' }}"
+          TOP_N="${{ github.event.inputs.top_n || github.event.client_payload.top_n || '5' }}"
+          SUBS="${{ github.event.inputs.subtitles || github.event.client_payload.subtitles || 'true' }}"
+          LANG="${{ github.event.inputs.lang || github.event.client_payload.lang || 'id' }}"
+          CHUNK="${{ github.event.inputs.chunk_duration || github.event.client_payload.chunk_duration || '600' }}"
+          OVERLAP="${{ github.event.inputs.overlap || github.event.client_payload.overlap || '120' }}"
+          FOCUS="${{ github.event.inputs.gameplay_focus || github.event.client_payload.gameplay_focus || '0.5' }}"
+          MARGIN="${{ github.event.inputs.subtitle_margin || github.event.client_payload.subtitle_margin || '300' }}"
+
+          SUBS_FLAG=""
+          if [ "$SUBS" = "true" ]; then SUBS_FLAG="--subtitles"; fi
+
+          {
+            echo "url=$URL"
+            echo "cmdline=--lang $LANG -n $TOP_N --cut $SUBS_FLAG \
+          --layout $LAYOUT --clips-dir ./clips \
+          --chunk-duration $CHUNK --overlap $OVERLAP \
+          --gameplay-focus $FOCUS --subtitle-margin $MARGIN \
+          -o result.json"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run ContentForge pipeline
+        env:
+          YTDLP_NO_WARNINGS: "1"
+        run: |
+          mkdir -p clips
+          python -m contentforge "${{ steps.args.outputs.url }}" ${{ steps.args.outputs.cmdline }}
+
+      - name: Upload clips as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clips-${{ github.run_id }}
+          path: |
+            clips/
+            result.json
+          if-no-files-found: warn
+          retention-days: 14
