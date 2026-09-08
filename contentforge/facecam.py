@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 from .layout import Region
-from .videodl import _get_stream_urls
+from .videodl import FFMPEG_HTTP_ARGS, _get_stream_urls
 
 
 MODEL_URL = (
@@ -37,6 +37,7 @@ def _ensure_model() -> Path:
 def _extract_frame(video_url: str, time_offset: float, out_path: Path) -> None:
     cmd = [
         "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+        *FFMPEG_HTTP_ARGS,
         "-ss", f"{time_offset:.3f}", "-i", video_url,
         "-vf", "select=eq(n\\,0)", "-vframes", "1", "-q:v", "2",
         str(out_path),

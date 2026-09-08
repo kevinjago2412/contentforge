@@ -41,6 +41,16 @@ def _get_stream_urls(url: str) -> tuple[str, Optional[str]]:
     return info["url"], None
 
 
+# Headers googlevideo expects from a real browser; without these, direct
+# ffmpeg access from datacenter IPs (e.g. GitHub Actions runners) gets 403.
+FFMPEG_HTTP_ARGS = [
+    "-user_agent",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "-referer", "https://www.youtube.com/",
+]
+
+
 def download_section(
     url: str,
     start: float,
@@ -68,9 +78,9 @@ def download_section(
         "-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "5",
         "-ss", f"{padded_start:.3f}", "-to", f"{padded_end:.3f}",
     ]
-    cmd += seek_args + ["-i", video_url]
+    cmd += FFMPEG_HTTP_ARGS + seek_args + ["-i", video_url]
     if audio_url:
-        cmd += seek_args + ["-i", audio_url]
+        cmd += FFMPEG_HTTP_ARGS + seek_args + ["-i", audio_url]
         cmd += ["-map", "0:v", "-map", "1:a"]
     cmd += ["-c", "copy", "-movflags", "+faststart", str(out_path)]
 
