@@ -60,8 +60,9 @@ def download_section(
 ) -> tuple[Path, float]:
     """Fetch only the [start-pad, end+pad] section of a video.
 
-    Uses ffmpeg HTTP range-seeking on the direct stream URLs, so only the
-    needed seconds are transferred (not the whole video).
+    Uses yt-dlp's native download_ranges so all auth/headers/PO-token handling
+    is done by yt-dlp itself — direct ffmpeg access to googlevideo URLs gets
+    403 Forbidden on datacenter IPs (e.g. GitHub Actions runners).
     Returns (path to the section file, actual padded start time).
     """
     output_dir = output_dir or Path(tempfile.mkdtemp(prefix="contentforge_vid_"))
@@ -70,22 +71,26 @@ def download_section(
     padded_start = max(0.0, start - pad)
     padded_end = end + pad
 
-    video_url, audio_url = _get_stream_urls(url)
     out_path = output_dir / f"{video_id}_{int(padded_start)}-{int(padded_end)}.mp4"
+    if out_path.exists():
+        return out_path, padded_start
 
-    cmd = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"]
-    seek_args = [
-        "-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "5",
-        "-ss", f"{padded_start:.3f}", "-to", f"{padded_end:.3f}",
-    ]
-    cmd += FFMPEG_HTTP_ARGS + seek_args + ["-i", video_url]
-    if audio_url:
-        cmd += FFMPEG_HTTP_ARGS + seek_args + ["-i", audio_url]
-        cmd += ["-map", "0:v", "-map", "1:a"]
-    cmd += ["-c", "copy", "-movflags", "+faststart", str(out_path)]
+    ydl_opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "format": FORMAT_SELECTOR,
+        "download_ranges": lambda _, __: [{"start_time": padded_start, "end_time": padded_end}],
+        "outtmpl": str(out_path.parent / (out_path.stem + ".%(ext)s")),
+        **_cookies_opts(),
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0 or not out_path.exists():
-        raise RuntimeError(f"ffmpeg section fetch failed: {result.stderr.strip()[:500]}")
+    # yt-dlp may pick a different container than .mp4
+    if not out_path.exists():
+        candidates = list(out_path.parent.glob(out_path.stem + ".*"))
+        if not candidates:
+            raise RuntimeError(f"yt-dlp section download produced no file for {out_path.stem}")
+        out_path = candidates[0]
 
     return out_path, padded_start

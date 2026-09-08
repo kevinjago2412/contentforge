@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 from .layout import Region
-from .videodl import FFMPEG_HTTP_ARGS, _get_stream_urls
+from .videodl import FORMAT_SELECTOR as FORMAT_SELECTOR_FALLBACK, _cookies_opts
 
 
 MODEL_URL = (
@@ -34,17 +34,42 @@ def _ensure_model() -> Path:
     return path
 
 
-def _extract_frame(video_url: str, time_offset: float, out_path: Path) -> None:
-    cmd = [
-        "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
-        *FFMPEG_HTTP_ARGS,
-        "-ss", f"{time_offset:.3f}", "-i", video_url,
-        "-vf", "select=eq(n\\,0)", "-vframes", "1", "-q:v", "2",
-        str(out_path),
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"frame extraction failed: {result.stderr.strip()[:500]}")
+def _extract_frame(url: str, time_offset: float, out_path: Path) -> None:
+    """Grab a single frame at time_offset via yt-dlp section download + ffmpeg.
+
+    yt-dlp handles all auth/headers (direct googlevideo access gets 403 on
+    datacenter IPs), then ffmpeg extracts frame 1 from the local file.
+    """
+    import yt_dlp
+
+    with tempfile.TemporaryDirectory() as tmp:
+        stem = Path(tmp) / "sample"
+        ydl_opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "format": FORMAT_SELECTOR_FALLBACK,
+            "download_ranges": lambda _, __: [
+                {"start_time": time_offset, "end_time": time_offset + 2.0}
+            ],
+            "outtmpl": str(stem) + ".%(ext)s",
+            **_cookies_opts(),
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+        samples = list(Path(tmp).glob("sample.*"))
+        if not samples:
+            raise RuntimeError("yt-dlp frame sample download produced no file")
+
+        cmd = [
+            "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+            "-i", str(samples[0]),
+            "-vf", "select=eq(n\\,0)", "-vframes", "1", "-q:v", "2",
+            str(out_path),
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"frame extraction failed: {result.stderr.strip()[:500]}")
 
 
 def detect_facecam_region(
@@ -62,11 +87,9 @@ def detect_facecam_region(
     except ImportError:
         return None
 
-    video_url, _ = _get_stream_urls(url)
-
     with tempfile.TemporaryDirectory() as tmp:
         frame_path = Path(tmp) / "frame.jpg"
-        _extract_frame(video_url, time_offset, frame_path)
+        _extract_frame(url, time_offset, frame_path)
 
         img = cv2.imread(str(frame_path))
         if img is None:
