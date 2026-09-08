@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 from .layout import Region
-from .videodl import FORMAT_SELECTOR as FORMAT_SELECTOR_FALLBACK, _cookies_opts
+from .videodl import FORMAT_SELECTOR_H264 as FORMAT_SELECTOR_FALLBACK, _cookies_opts
 
 
 MODEL_URL = (
@@ -35,11 +35,13 @@ def _ensure_model() -> Path:
 
 
 def _extract_frame(url: str, time_offset: float, out_path: Path) -> None:
-    """Grab a single frame at time_offset via yt-dlp section download + ffmpeg.
+    """Grab a single frame at time_offset via yt-dlp section download + OpenCV.
 
     yt-dlp handles all auth/headers (direct googlevideo access gets 403 on
-    datacenter IPs), then ffmpeg extracts frame 1 from the local file.
+    datacenter IPs). OpenCV reads the local sample directly — more robust
+    than ffmpeg CLI, which hits decoder assertions on some webm/vp9 samples.
     """
+    import cv2
     import yt_dlp
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -57,19 +59,19 @@ def _extract_frame(url: str, time_offset: float, out_path: Path) -> None:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
-        samples = list(Path(tmp).glob("sample.*"))
+        samples = [p for p in Path(tmp).glob("sample.*") if p.suffix != ".part"]
         if not samples:
             raise RuntimeError("yt-dlp frame sample download produced no file")
 
-        cmd = [
-            "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
-            "-i", str(samples[0]),
-            "-vframes", "1", "-q:v", "2",
-            str(out_path),
-        ]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode != 0:
-            raise RuntimeError(f"frame extraction failed: {result.stderr.strip()[:500]}")
+        cap = cv2.VideoCapture(str(samples[0]))
+        try:
+            ok, frame = cap.read()
+        finally:
+            cap.release()
+        if not ok or frame is None:
+            raise RuntimeError("could not read first frame from sample video")
+        if not cv2.imwrite(str(out_path), frame):
+            raise RuntimeError(f"could not write frame to {out_path}")
 
 
 def detect_facecam_region(

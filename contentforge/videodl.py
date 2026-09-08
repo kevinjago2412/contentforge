@@ -13,6 +13,15 @@ FORMAT_SELECTOR = (
     "/bv*[height<=1080]+ba/b[height<=1080]/b"
 )
 
+# H.264-only variant: AV1/vp9 streams decode fine on desktops/phones but trip
+# ffmpeg/opencv decoder assertions on some CI runners. Prefer avc1 for
+# anything that gets decoded locally (frame samples, render sections).
+FORMAT_SELECTOR_H264 = (
+    "bv*[vcodec^=avc1][height<=1080]+ba/"
+    "bv*[vcodec^=avc1]/b[vcodec^=avc1]/"
+    + FORMAT_SELECTOR
+)
+
 
 def sanitize_slug(text: str, max_len: int = 40) -> str:
     """Make a filesystem-safe slug from arbitrary text."""
@@ -78,7 +87,7 @@ def download_section(
     ydl_opts = {
         "quiet": True,
         "no_warnings": True,
-        "format": FORMAT_SELECTOR,
+        "format": FORMAT_SELECTOR_H264,
         "download_ranges": lambda _, __: [{"start_time": padded_start, "end_time": padded_end}],
         "outtmpl": str(out_path.parent / (out_path.stem + ".%(ext)s")),
         **_cookies_opts(),
