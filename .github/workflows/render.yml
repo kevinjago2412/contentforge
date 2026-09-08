@@ -88,6 +88,7 @@ jobs:
         env:
           YTDLP_NO_WARNINGS: "1"
           CONTENTFORGE_COOKIES: "cookies.txt"
+          CONTENTFORGE_JS_RUNTIME: "node"
         run: |
           mkdir -p clips
           python -m contentforge "${{ steps.args.outputs.url }}" ${{ steps.args.outputs.cmdline }}

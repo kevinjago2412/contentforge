@@ -12,17 +12,36 @@ LANG_PRIORITY = ["id", "en", "ms", "auto"]
 
 
 def _cookies_opts() -> dict:
-    """Extra yt-dlp options for cookie support (CONTENTFORGE_COOKIES env var).
+    """Extra yt-dlp options for cookie + JS-runtime support.
 
-    Set CONTENTFORGE_COOKIES to a Netscape-format cookies.txt path or
-    "from-browser:BROWSER[:PROFILE]" (e.g. from-browser:brave).
+    Env vars:
+    - CONTENTFORGE_COOKIES: Netscape cookies.txt path or
+      "from-browser:BROWSER[:PROFILE]" (e.g. from-browser:brave).
+    - CONTENTFORGE_JS_RUNTIME: "node" (default if empty when cookies are set),
+      "deno", "quickjs", or "none" to disable. YouTube's n-challenge needs a
+      JS runtime; without it formats are missing / requests get blocked.
+    - CONTENTFORGE_REMOTE_COMPONENTS: comma-separated yt-dlp remote components
+      (default "ejs:github" when a JS runtime is enabled).
     """
+    opts: dict = {}
+
     val = os.getenv("CONTENTFORGE_COOKIES", "").strip()
-    if not val:
-        return {}
     if val.startswith("from-browser:"):
-        return {"cookiefile": None, "cookiesfrombrowser": tuple(val.split(":", 2)[1:])}
-    return {"cookiefile": val, "cookiesfrombrowser": None}
+        opts["cookiefile"] = None
+        opts["cookiesfrombrowser"] = tuple(val.split(":", 2)[1:])
+    elif val:
+        opts["cookiefile"] = val
+
+    js = os.getenv("CONTENTFORGE_JS_RUNTIME", "").strip().lower()
+    if not js and val:
+        js = "node"  # sane default: node is the most widely available runtime
+    if js and js != "none":
+        opts["js_runtimes"] = {js: {}}
+        comps = os.getenv("CONTENTFORGE_REMOTE_COMPONENTS", "ejs:github").strip()
+        if comps:
+            opts["remote_components"] = [c.strip() for c in comps.split(",") if c.strip()]
+
+    return opts
 
 
 def _extract_video_id(url: str) -> str:
