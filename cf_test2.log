@@ -1,55 +1,0 @@
-[1/5] Downloading subtitles for: https://www.youtube.com/live/6qexUOI3atg
-[download]    1.00KiB at  234.65KiB/s (00:00:00)[download]    3.00KiB at  310.08KiB/s (00:00:00)[download]    7.00KiB at  423.96KiB/s (00:00:00)[download]   15.00KiB at  659.18KiB/s (00:00:00)[download]   31.00KiB at    1.01MiB/s (00:00:00)[download]   63.00KiB at    1.40MiB/s (00:00:00)[download]  127.00KiB at    2.14MiB/s (00:00:00)[download]  255.00KiB at    3.07MiB/s (00:00:00)[download]  511.00KiB at    4.20MiB/s (00:00:00)[download] 1023.00KiB at    4.27MiB/s (00:00:00)[download]    1.40MiB at    4.05MiB/s (00:00:00)[download] 100% of    1.40MiB in 00:00:00 at 2.00MiB/s                                                            Subtitle saved: /tmp/contentforge_5m9by4vd/6qexUOI3atg.id.vtt
-      Title: LETSGO VIP GOLDLANE - MLBB
-[2/5] Parsing VTT...
-      Found 8274 cues
-[3/5] Chunking transcript...
-      Created 38 chunks
-[4/5] Querying LLM for candidates...
-      Chunk 0: 0 candidates
-      Chunk 1: 3 candidates
-      Chunk 2: 0 candidates
-      Chunk 3: 0 candidates
-      Chunk 4: 0 candidates
-      Chunk 5: 0 candidates
-      Chunk 6: 0 candidates
-      Chunk 7: 0 candidates
-      Chunk 8: 0 candidates
-      Chunk 9: 0 candidates
-      Chunk 10: 0 candidates
-      Chunk 11: 3 candidates
-      Chunk 12: error (Unterminated string starting at: line 19 column 5 (char 698))
-      Chunk 13: 0 candidates
-      Chunk 14: 0 candidates
-      Chunk 15: 3 candidates
-      Chunk 16: 0 candidates
-      Chunk 17: error (Unterminated string starting at: line 2 column 91 (char 92))
-      Chunk 18: 0 candidates
-      Chunk 19: 0 candidates
-      Chunk 20: 0 candidates
-      Chunk 21: error (Unterminated string starting at: line 7 column 15 (char 121))
-      Chunk 22: 0 candidates
-      Chunk 23: 0 candidates
-      Chunk 24: 0 candidates
-      Chunk 25: 0 candidates
-      Chunk 26: 0 candidates
-      Chunk 27: error (Unterminated string starting at: line 1 column 396 (char 395))
-      Chunk 28: 0 candidates
-      Chunk 29: 0 candidates
-      Chunk 30: 0 candidates
-      Chunk 31: 3 candidates
-      Chunk 32: 3 candidates
-      Chunk 33: 3 candidates
-      Chunk 34: 0 candidates
-      Chunk 35: 0 candidates
-      Chunk 36: 0 candidates
-      Chunk 37: 3 candidates
-[5/5] Deduplicating and ranking...
-[layout] Auto-detecting facecam region for gaming layout...
-[ WARN:0@12.378] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-      Detected facecam region: Region(x=np.float64(0.025876247485478714), y=np.float64(0.7100853616219979), w=np.float64(0.24461547613143922), h=np.float64(0.28991463837800213))
-[cut] Cutting 3 clip(s) to clips ...
-      Clip 1: 15380s-15435s -> letsgo_vip_goldlane_mlbb_clip_1_god_mode_blue_buff.mp4
-      Clip 2: 15930s-15970s -> letsgo_vip_goldlane_mlbb_clip_2_20_membership_reaction.mp4
-      Clip 3: 17858s-17898s -> letsgo_vip_goldlane_mlbb_clip_3_lesle_style_4_combo_hit_tutori.mp4
-Saved 3 top clip(s) to result.json
