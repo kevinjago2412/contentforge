@@ -84,20 +84,6 @@ jobs:
         env:
           YT_COOKIES: ${{ secrets.YT_COOKIES }}
 
-      - name: Run ContentForge pipeline
-        env:
-          YTDLP_NO_WARNINGS: "1"
-          CONTENTFORGE_COOKIES: "cookies.txt"
-          CONTENTFORGE_JS_RUNTIME: "node"
-        run: |
-          mkdir -p clips
-          python -m contentforge "${{ steps.args.outputs.url }}" ${{ steps.args.outputs.cmdline }}
-
-      - name: Shred cookies
-        if: always()
-        run: |
-          rm -f cookies.txt
-
       - name: Resolve inputs
         id: args
         run: |
@@ -127,9 +113,16 @@ jobs:
       - name: Run ContentForge pipeline
         env:
           YTDLP_NO_WARNINGS: "1"
+          CONTENTFORGE_COOKIES: "cookies.txt"
+          CONTENTFORGE_JS_RUNTIME: "node"
         run: |
           mkdir -p clips
           python -m contentforge "${{ steps.args.outputs.url }}" ${{ steps.args.outputs.cmdline }}
+
+      - name: Shred cookies
+        if: always()
+        run: |
+          rm -f cookies.txt
 
       - name: Upload clips as artifact
         if: always()
