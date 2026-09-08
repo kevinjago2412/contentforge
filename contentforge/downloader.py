@@ -1,3 +1,4 @@
+import os
 import re
 import tempfile
 from pathlib import Path
@@ -8,6 +9,20 @@ import yt_dlp
 
 # Priority order for subtitle languages (Indonesian first, then common fallbacks)
 LANG_PRIORITY = ["id", "en", "ms", "auto"]
+
+
+def _cookies_opts() -> dict:
+    """Extra yt-dlp options for cookie support (CONTENTFORGE_COOKIES env var).
+
+    Set CONTENTFORGE_COOKIES to a Netscape-format cookies.txt path or
+    "from-browser:BROWSER[:PROFILE]" (e.g. from-browser:brave).
+    """
+    val = os.getenv("CONTENTFORGE_COOKIES", "").strip()
+    if not val:
+        return {}
+    if val.startswith("from-browser:"):
+        return {"cookiefile": None, "cookiesfrombrowser": tuple(val.split(":", 2)[1:])}
+    return {"cookiefile": val, "cookiesfrombrowser": None}
 
 
 def _extract_video_id(url: str) -> str:
@@ -78,6 +93,7 @@ def download_subtitle(
         "subtitleslangs": [preferred_lang] + [l for l in LANG_PRIORITY if l != preferred_lang and l != "auto"],
         "skip_download": True,
         "outtmpl": outtmpl,
+        **_cookies_opts(),
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:

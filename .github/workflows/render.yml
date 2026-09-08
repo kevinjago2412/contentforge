@@ -76,6 +76,27 @@ jobs:
             "${{ secrets.OPENAI_BASE_URL }}" \
             "${{ secrets.MODEL }}" > .env
 
+      - name: Write YouTube cookies (optional)
+        if: ${{ env.YT_COOKIES != '' }}
+        run: |
+          printf '%s\n' "$YT_COOKIES" > cookies.txt
+          chmod 600 cookies.txt
+        env:
+          YT_COOKIES: ${{ secrets.YT_COOKIES }}
+
+      - name: Run ContentForge pipeline
+        env:
+          YTDLP_NO_WARNINGS: "1"
+          CONTENTFORGE_COOKIES: "cookies.txt"
+        run: |
+          mkdir -p clips
+          python -m contentforge "${{ steps.args.outputs.url }}" ${{ steps.args.outputs.cmdline }}
+
+      - name: Shred cookies
+        if: always()
+        run: |
+          rm -f cookies.txt
+
       - name: Resolve inputs
         id: args
         run: |

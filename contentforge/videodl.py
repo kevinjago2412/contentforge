@@ -6,7 +6,7 @@ from typing import Optional
 
 import yt_dlp
 
-from .downloader import _extract_video_id
+from .downloader import _extract_video_id, _cookies_opts
 
 FORMAT_SELECTOR = (
     "bv*[height<=1080][ext=mp4]+ba[ext=m4a]"
@@ -26,6 +26,7 @@ def _get_stream_urls(url: str) -> tuple[str, Optional[str]]:
         "quiet": True,
         "no_warnings": True,
         "format": FORMAT_SELECTOR,
+        **_cookies_opts(),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
