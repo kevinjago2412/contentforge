@@ -64,7 +64,7 @@ def _extract_frame(url: str, time_offset: float, out_path: Path) -> None:
         cmd = [
             "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
             "-i", str(samples[0]),
-            "-vf", "select=eq(n\\,0)", "-vframes", "1", "-q:v", "2",
+            "-vframes", "1", "-q:v", "2",
             str(out_path),
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
